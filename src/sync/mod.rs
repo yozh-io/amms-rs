@@ -112,6 +112,7 @@ pub async fn populate_amms<M: Middleware>(
                 for amm_chunk in amms.chunks_mut(step) {
                     uniswap_v2::batch_request::get_amm_data_batch_request(
                         amm_chunk,
+                        Some(block_number),
                         middleware.clone(),
                     )
                     .await?;

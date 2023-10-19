@@ -76,6 +76,7 @@ pub async fn get_pairs_batch_request<M: Middleware>(
 
 pub async fn get_amm_data_batch_request<M: Middleware>(
     amms: &mut [AMM],
+    block_number: Option<u64>,
     middleware: Arc<M>,
 ) -> Result<(), AMMError<M>> {
     let mut target_addresses = vec![];
@@ -87,7 +88,10 @@ pub async fn get_amm_data_batch_request<M: Middleware>(
 
     let deployer = IGetUniswapV2PoolDataBatchRequest::deploy(middleware.clone(), constructor_args)?;
 
-    let return_data: Bytes = deployer.call_raw().await?;
+    let return_data: Bytes = match block_number {
+        Some(block_number) => deployer.block(block_number).call_raw().await?,
+        None => deployer.call_raw().await?,
+    };
     let return_data_tokens = ethers::abi::decode(
         &[ParamType::Array(Box::new(ParamType::Tuple(vec![
             ParamType::Address,   // token a
