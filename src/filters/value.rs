@@ -27,7 +27,7 @@ pub async fn filter_amms_below_usd_threshold<M: Middleware>(
     weth_value_in_token_to_weth_pool_threshold: U256, //This is the threshold where we will ignore any token price < threshold during batch calls
     step: usize,
     middleware: Arc<M>,
-) -> Result<Vec<AMM>, AMMError<M>> {
+) -> Result<Vec<(AMM, i32)>, AMMError<M>> {
     let spinner = Spinner::new(
         spinners::Dots,
         "Filtering AMMs below USD threshold...",
@@ -50,11 +50,10 @@ pub async fn filter_amms_below_usd_threshold<M: Middleware>(
     .await?;
 
     for (i, weth_value) in weth_values_in_pools.iter().enumerate() {
-        if (weth_value / U256_10_POW_18).as_u64() as f64 * weth_usd_price
-            >= usd_value_in_pool_threshold
-        {
+        let tvl = (weth_value / U256_10_POW_18).as_u64() as f64 * weth_usd_price;
+        if tvl >= usd_value_in_pool_threshold {
             //TODO: using clone for now since we only do this once but find a better way in a future update
-            filtered_amms.push(amms[i].clone());
+            filtered_amms.push((amms[i].clone(), tvl as i32));
         }
     }
 
